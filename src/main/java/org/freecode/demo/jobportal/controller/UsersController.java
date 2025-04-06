@@ -7,11 +7,16 @@ import org.freecode.demo.jobportal.entity.Users;
 import org.freecode.demo.jobportal.entity.UsersType;
 import org.freecode.demo.jobportal.service.UsersService;
 import org.freecode.demo.jobportal.service.UsersTypeService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 @Controller
@@ -49,5 +54,23 @@ public class UsersController {
 		}
 		usersService.addNew(users);
 		return "dashboard";
+	}
+	
+	@GetMapping("/login")
+	public String login() {
+		
+		return "login";
+	}
+	
+	@GetMapping("/logout")
+	public String logout(HttpServletRequest req, HttpServletResponse resp) {
+		
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		if (auth != null) {
+			new SecurityContextLogoutHandler().logout(req, resp, auth);
+		}
+		return "redirect:/";
+		
 	}
 }
