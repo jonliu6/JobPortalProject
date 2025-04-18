@@ -11,8 +11,14 @@ import org.freecode.demo.jobportal.entity.Skills;
 import org.freecode.demo.jobportal.entity.Users;
 import org.freecode.demo.jobportal.repository.UsersRepository;
 import org.freecode.demo.jobportal.service.JobSeekerProfileService;
+import org.freecode.demo.jobportal.util.FileDownloadUtil;
 import org.freecode.demo.jobportal.util.FileUploadUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +27,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -113,5 +120,37 @@ public class JobSeekerProfileController {
 		}
 	    return "redirect:/dashboard";
 		
+	}
+	
+	@GetMapping("/{id}")
+	public String candidateProfile(@PathVariable("id") int id, Model model) {
+		
+		Optional<JobSeekerProfile> seekerProfile = jobSeekerProfileService.getOne(id);
+		model.addAttribute("profile", seekerProfile.get());
+		return "job-seeker-profile";
+		
+	}
+	
+	@GetMapping("/downloadResume")
+	public ResponseEntity<?> downloadResume(@RequestParam(value="fileName") String fileName, @RequestParam(value="userID") String userId) {
+		
+		FileDownloadUtil downloadUtil = new FileDownloadUtil();
+		Resource res = null;
+		
+		try {
+			res = downloadUtil.getFileAsResource("photos/candidate/" + userId, fileName);
+		} catch (IOException ioe) {
+			return ResponseEntity.badRequest().build();
+		}
+		
+		if (res ==null) {
+			return new ResponseEntity<>("File not found.", HttpStatus.NOT_FOUND);
+		}
+		
+		String contentType = "application/octet-stream";
+		String headerValue = "attachment; filename=\"" + res.getFilename() + "\"";
+		return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
+				.header(HttpHeaders.CONTENT_DISPOSITION, headerValue)
+				.body(res);
 	}
 }
