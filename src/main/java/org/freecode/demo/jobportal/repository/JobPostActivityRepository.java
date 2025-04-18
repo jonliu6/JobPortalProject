@@ -1,5 +1,6 @@
 package org.freecode.demo.jobportal.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.freecode.demo.jobportal.entity.IRecruiterJobs;
@@ -20,4 +21,30 @@ public interface JobPostActivityRepository extends JpaRepository<JobPostActivity
             " where j.posted_by_id = :recruiter " +
             " GROUP By j.job_post_id" ,nativeQuery = true)
 	List<IRecruiterJobs> getRecruiterJobs(@Param("recruiter") int recruiter);
+
+	@Query(value = "SELECT * FROM job_post_activity j INNER JOIN job_location l on j.job_location_id=l.id  WHERE j" +
+            ".job_title LIKE %:job%"
+            + " AND (l.city LIKE %:location%"
+            + " OR l.country LIKE %:location%"
+            + " OR l.state LIKE %:location%) " +
+            " AND (j.job_type IN(:type)) " +
+            " AND (j.remote IN(:remote)) ", nativeQuery = true)
+	List<JobPostActivity> searchWithoutDate(@Param("job") String job, 
+			@Param("location") String location, 
+			@Param("remote") List<String> remote,
+			@Param("type") List<String> type);
+
+	@Query(value = "SELECT * FROM job_post_activity j INNER JOIN job_location l on j.job_location_id=l.id  WHERE j" +
+            ".job_title LIKE %:job%"
+            + " AND (l.city LIKE %:location%"
+            + " OR l.country LIKE %:location%"
+            + " OR l.state LIKE %:location%) " +
+            " AND (j.job_type IN(:type)) " +
+            " AND (j.remote IN(:remote)) " +
+            " AND (posted_date >= :date)", nativeQuery = true)
+	List<JobPostActivity> search(@Param("job") String job,
+			@Param("location") String location,
+			@Param("remote") List<String> remote,
+			@Param("type") List<String> type,
+			@Param("date") LocalDate searchDate);
 }
